@@ -1,24 +1,52 @@
 #include "genetic.h"
-#include "utils.h"
-#include <iostream>
+#include "../core/puzzle_state.h"
+#include "../core/utils.h"
+
+#include <algorithm>
+#include <cstdlib>
 
 /*
 Índice de movimentos:
-...0 cima
-...1 baixo
-...2 esquerda
-...3 direita
+0 - cima
+1 - baixo
+2 - esquerda
+3 - direita
 */
 
-// Aplica a sequência de genes de um indivíduo sobre o estado inicial do tabuleiro
+
+constexpr double STEP_COST = 0.2;
+
+double calculateFitness(const PuzzleState &state, int steps)
+{
+    return calculateHeuristics(state) + STEP_COST * steps;
+}
+
+Individual generateIndividual(const PuzzleState &initialState, int geneLength)
+{
+    Individual ind;
+    PuzzleState auxState = initialState;
+
+    while (ind.genes.size() < geneLength)
+    {
+        int move = generateRandomMove(auxState);
+
+        if (applyMove(auxState, move))
+            ind.genes.push_back(move);
+    }
+
+    return ind;
+}
+
 void applyGenes(Individual &ind, const PuzzleState &initialState)
 {
     PuzzleState currentState = initialState;
+    PuzzleState goalState = getGoalState();
     int currentSteps = 0;
 
     PuzzleState bestState = initialState;
-    double bestFitness = calculateHeuristics(bestState);
+    double bestFitness = calculateFitness(initialState, 0);
     int stepsToBest = 0;
+    bool solved = false;
 
     for (int move : ind.genes)
     {
@@ -26,23 +54,28 @@ void applyGenes(Individual &ind, const PuzzleState &initialState)
             break;
 
         currentSteps++;
-        double currentFitness = calculateHeuristics(currentState) + 0.2 * currentSteps;
+        double currentFitness = calculateFitness(currentState, currentSteps);
 
         if (currentFitness < bestFitness)
         {
             bestState = currentState;
-            stepsToBest = currentSteps;
             bestFitness = currentFitness;
+            stepsToBest = currentSteps;
         }
 
-        if (bestState == getGoalState())
+        if (currentState == goalState)
+        {
+            solved = true;
             break;
+        }
     }
+
+    ind.bestState = bestState;
     ind.bestFitness = bestFitness;
     ind.stepsToBest = stepsToBest;
+    ind.solved = solved;
 }
 
-// Gera a população inicial com base nas quantidades de indivíduos, movimentos do genes e movimentos de embaralhamento (para geração do estado inicial)
 std::vector<Individual> generateInitialPopulation(int populationSize, int geneLength, int shuffleMoves)
 {
     PuzzleState initialState = generateRandomInitial(shuffleMoves);
@@ -50,25 +83,20 @@ std::vector<Individual> generateInitialPopulation(int populationSize, int geneLe
 
     while (population.size() < populationSize)
     {
-        Individual ind;
-        PuzzleState auxState = initialState;
-
-        while (ind.genes.size() < geneLength)
-        {
-            std::vector<int> validMoves = getValidMoves(auxState);
-
-            int index = rand() % validMoves.size();
-            int move = validMoves[index];
-
-            if (applyMove(auxState, move))
-            {
-                ind.genes.push_back(move);
-            }
-        }
-
+        Individual ind = generateIndividual(initialState, geneLength);
         applyGenes(ind, initialState);
         population.push_back(ind);
     }
 
     return population;
+}
+
+void orderPopulation(std::vector<Individual> &population)
+{
+    std::sort(
+        population.begin(),
+        population.end(),
+
+        [](const Individual &a, const Individual &b)
+        { return a.bestFitness < b.bestFitness; });
 }
