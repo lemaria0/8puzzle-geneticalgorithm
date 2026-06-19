@@ -3,12 +3,13 @@
 
 #include <vector>
 
-struct PuzzleState {
-    int board[3][3]; 
+struct PuzzleState
+{
+    int board[3][3];
     int emptyRow;
     int emptyCol;
 
-    bool operator==(const PuzzleState& other) const;
+    bool operator==(const PuzzleState &other) const;
 };
 
 PuzzleState generateRandomInitial(int shuffles);
