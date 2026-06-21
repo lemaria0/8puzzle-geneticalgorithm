@@ -84,7 +84,7 @@ double calculateFitness(Individual &ind, const PuzzleState &initialState)
             ind.stagnation = stagnation;
         }
 
-        if (currentState == goalState)
+        if (calculateHeuristics(ind.bestState) == 0)
         {
             ind.solved = true;
             break;
@@ -113,7 +113,7 @@ std::vector<Individual> generateInitialPopulation(const PuzzleState &initialStat
 void orderPopulation(std::vector<Individual> &population)
 {
     std::sort(population.begin(), population.end(), [](const Individual &a, const Individual &b)
-              { return a.bestFitness < b.bestFitness; });
+    { return a.bestFitness < b.bestFitness; });
 }
 
 std::vector<Individual> elitismSelection(const std::vector<Individual> &population, double elitismRate)
@@ -181,12 +181,10 @@ void mutation(Individual &ind, double mutationRate, const PuzzleState &initialSt
     {
         if (mutated)
         {
-            // CORREÇÃO 3a: Cast explícito na atribuição
             ind.genes[i] = static_cast<Move>(generateRandomMove(currentState));
         }
         else if (randPercent() < mutationRate)
         {
-            // CORREÇÃO 3b: Cast explícito na atribuição
             ind.genes[i] = static_cast<Move>(generateRandomMove(currentState));
             mutated = true;
         }
@@ -248,13 +246,27 @@ GeneticResult runGeneticAlgorithm(const PuzzleState &initialState, int populatio
 
     int generation = 0;
     bool solved = population[0].solved;
+    double bestFitnessHistoric = population[0].bestFitness;
 
-    while (generation < maxGenerations && !solved)
+    int stagnantGenerationsCount = 0;
+    const int MAX_STAGNANT_GENERATIONS = std::max(10, static_cast<int>(maxGenerations * 0.1));
+
+    while (generation < maxGenerations && stagnantGenerationsCount < MAX_STAGNANT_GENERATIONS)
     {
         population = nextGeneration(population, initialState, elitismRate, crossoverRate, mutationRate);
         generation++;
 
-        if (population[0].solved)
+        if (population[0].bestFitness < bestFitnessHistoric)
+        {
+            bestFitnessHistoric = population[0].bestFitness;
+            stagnantGenerationsCount = 0;
+        }
+        else
+        {
+            stagnantGenerationsCount++;
+        }
+
+        if (population[0].solved || calculateHeuristics(population[0].bestState) == 0)
         {
             solved = true;
         }
@@ -262,7 +274,7 @@ GeneticResult runGeneticAlgorithm(const PuzzleState &initialState, int populatio
 
     GeneticResult result;
     result.bestInitial = std::move(bestInitial);
-    result.bestFinal = std::move(population[0]);
+    result.bestFinal = population[0];
     result.totalGenerations = generation;
     result.solved = solved;
 

@@ -46,11 +46,11 @@ int main()
     std::cout << "         RELATORIO DE EXECUCAO           \n";
     std::cout << "=========================================\n";
     std::cout << "Geracoes computadas : " << result.totalGenerations << "\n";
-    std::cout << "Fitness Inicial     : " << result.bestInitial.bestFitness << "\n";
-    std::cout << "Fitness Final       : " << result.bestFinal.bestFitness << "\n";
-    std::cout << "Status do Objetivo  : " << (result.solved ? "SUCESSO (Resolvido!)" : "FALHA (Nao resolvido)") << "\n";
+    std::cout << "Fitness inicial     : " << result.bestInitial.bestFitness << "\n";
+    std::cout << "Fitness final       : " << result.bestFinal.bestFitness << "\n";
+    std::cout << "Status do objetivo  : " << (result.solved ? "Sucesso" : "Falha") << "\n";
     std::cout << "Passos ate a meta   : " << result.bestFinal.stepsToBest << "\n";
-    std::cout << "Estagnacoes no vetor: " << result.bestFinal.stagnation << "\n";
+    std::cout << "Estagnacoes         : " << result.bestFinal.stagnation << "\n";
     std::cout << "=========================================\n";
 
     std::cout << "\n--- MELHOR ESTADO ALCANCADO PELO INDIVIDUO FINAL ---\n";
