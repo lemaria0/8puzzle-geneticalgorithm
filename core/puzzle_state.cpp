@@ -1,21 +1,20 @@
 #include "puzzle_state.h"
+#include "../algorithms/genetic.h"
 
-#include <cstdlib>
 #include <algorithm>
+#include <random>
+#include <array>
 
+static std::mt19937 &getEngine()
+{
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    return gen;
+}
 
 bool PuzzleState::operator==(const PuzzleState &other) const
 {
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 3; j++)
-        {
-            if (board[i][j] != other.board[i][j])
-                return false;
-        }
-    }
-
-    return true;
+    return this->board == other.board;
 }
 
 PuzzleState getGoalState()
@@ -40,21 +39,36 @@ PuzzleState getGoalState()
     return goal;
 }
 
+std::pair<std::array<Move, 4>, size_t> getValidMovesOpt(const PuzzleState &state)
+{
+    std::array<Move, 4> moves{};
+    size_t count = 0;
+
+    if (state.emptyRow > 0)
+        moves[count++] = Move::UP;
+    if (state.emptyRow < 2)
+        moves[count++] = Move::DOWN;
+    if (state.emptyCol > 0)
+        moves[count++] = Move::LEFT;
+    if (state.emptyCol < 2)
+        moves[count++] = Move::RIGHT;
+
+    return {moves, count};
+}
+
 std::vector<int> getValidMoves(const PuzzleState &state)
 {
     std::vector<int> moves;
+    moves.reserve(4);
 
     if (state.emptyRow > 0)
-        moves.push_back(0);
-
+        moves.push_back(Move::UP);
     if (state.emptyRow < 2)
-        moves.push_back(1);
-
+        moves.push_back(Move::DOWN);
     if (state.emptyCol > 0)
-        moves.push_back(2);
-
+        moves.push_back(Move::LEFT);
     if (state.emptyCol < 2)
-        moves.push_back(3);
+        moves.push_back(Move::RIGHT);
 
     return moves;
 }
@@ -65,9 +79,8 @@ PuzzleState generateRandomInitial(int shuffles)
 
     for (int i = 0; i < shuffles; i++)
     {
-        std::vector<int> moves = getValidMoves(state);
-        int index = rand() % moves.size();
-        applyMove(state, moves[index]);
+        int move = generateRandomMove(state);
+        applyMove(state, move);
     }
 
     return state;
@@ -75,10 +88,10 @@ PuzzleState generateRandomInitial(int shuffles)
 
 int generateRandomMove(const PuzzleState &state)
 {
-    std::vector<int> validMoves = getValidMoves(state);
-    int index = rand() % validMoves.size();
+    auto [validMoves, count] = getValidMovesOpt(state);
 
-    return validMoves[index];
+    std::uniform_int_distribution<size_t> dist(0, count - 1);
+    return static_cast<int>(validMoves[dist(getEngine())]);
 }
 
 bool applyMove(PuzzleState &state, int move)
@@ -86,18 +99,18 @@ bool applyMove(PuzzleState &state, int move)
     int row = state.emptyRow;
     int col = state.emptyCol;
 
-    switch (move)
+    switch (static_cast<Move>(move))
     {
-    case 0:
+    case Move::UP:
         row--;
         break;
-    case 1:
+    case Move::DOWN:
         row++;
         break;
-    case 2:
+    case Move::LEFT:
         col--;
         break;
-    case 3:
+    case Move::RIGHT:
         col++;
         break;
     default:
@@ -105,7 +118,9 @@ bool applyMove(PuzzleState &state, int move)
     }
 
     if (row < 0 || row >= 3 || col < 0 || col >= 3)
+    {
         return false;
+    }
 
     std::swap(state.board[state.emptyRow][state.emptyCol], state.board[row][col]);
 

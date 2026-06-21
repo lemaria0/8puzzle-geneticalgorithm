@@ -1,25 +1,23 @@
 #include "utils.h"
 #include "puzzle_state.h"
 
-#include <cstdlib>
+#include <cmath>
 
 constexpr int MISPLACED_WEIGHT = 36;
 constexpr int MANHATTAN_WEIGHT = 18;
 
-
-int countMisplacedPieces(const PuzzleState& state)
+int countMisplacedPieces(const PuzzleState &state)
 {
-    PuzzleState goal = getGoalState();
+    static const PuzzleState goal = getGoalState();
     int count = 0;
 
-    for(int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
     {
-        for(int j = 0; j < 3; j++)
+        for (int j = 0; j < 3; j++)
         {
             int value = state.board[i][j];
 
-            if(value != 0 &&
-               value != goal.board[i][j])
+            if (value != 0 && value != goal.board[i][j])
             {
                 count++;
             }
@@ -29,31 +27,32 @@ int countMisplacedPieces(const PuzzleState& state)
     return count;
 }
 
-int calculateManhattan(const PuzzleState& state)
+int calculateManhattan(const PuzzleState &state)
 {
     int distance = 0;
 
-    for(int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
     {
-        for(int j = 0; j < 3; j++)
+        for (int j = 0; j < 3; j++)
         {
             int value = state.board[i][j];
 
-            if(value == 0)
+            if (value == 0)
+            {
                 continue;
+            }
 
             int targetRow = (value - 1) / 3;
             int targetCol = (value - 1) % 3;
 
-            distance += abs(i - targetRow) + abs(j - targetCol);
+            distance += std::abs(i - targetRow) + std::abs(j - targetCol);
         }
     }
 
     return distance;
 }
 
-// Fitness heurístico
-int calculateHeuristics(const PuzzleState& state)
+int calculateHeuristics(const PuzzleState &state)
 {
-    return MISPLACED_WEIGHT * countMisplacedPieces(state) + MANHATTAN_WEIGHT * calculateManhattan(state);
+    return (MISPLACED_WEIGHT * countMisplacedPieces(state)) + (MANHATTAN_WEIGHT * calculateManhattan(state));
 }

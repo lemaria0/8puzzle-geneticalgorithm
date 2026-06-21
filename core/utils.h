@@ -3,8 +3,13 @@
 
 #include "puzzle_state.h"
 
+// Conta quantas peças estão fora do lugar objetivo
+int countMisplacedPieces(const PuzzleState& state);
 
-// Calcula a heurística combinada do estado
+// Calcula a soma das distâncias horizontais e verticais de cada peça até seu lugar correto
+int calculateManhattan(const PuzzleState& state);
+
+// Calcula a pontuação heurística combinada do estado
 int calculateHeuristics(const PuzzleState& state);
 
-#endif
+#endif // UTILS_H]
