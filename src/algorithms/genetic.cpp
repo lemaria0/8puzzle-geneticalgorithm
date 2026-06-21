@@ -44,7 +44,7 @@ Individual generateIndividual(const PuzzleState &initialState, int geneLength)
 
         if (applyMove(auxState, move))
         {
-            ind.genes.push_back(move);
+            ind.genes.push_back(static_cast<Move>(move));
         }
     }
 
@@ -65,9 +65,9 @@ double calculateFitness(Individual &ind, const PuzzleState &initialState)
     ind.bestFitness = calculateHeuristics(initialState);
     ind.solved = false;
 
-    for (int move : ind.genes)
+    for (Move move : ind.genes)
     {
-        if (!applyMove(currentState, move))
+        if (!applyMove(currentState, static_cast<int>(move)))
         {
             stagnation++;
         }
@@ -112,11 +112,8 @@ std::vector<Individual> generateInitialPopulation(const PuzzleState &initialStat
 
 void orderPopulation(std::vector<Individual> &population)
 {
-    std::sort(population.begin(), population.end(),
-              [](const Individual &a, const Individual &b)
-              {
-                  return a.bestFitness < b.bestFitness;
-              });
+    std::sort(population.begin(), population.end(), [](const Individual &a, const Individual &b)
+              { return a.bestFitness < b.bestFitness; });
 }
 
 std::vector<Individual> elitismSelection(const std::vector<Individual> &population, double elitismRate)
@@ -184,15 +181,17 @@ void mutation(Individual &ind, double mutationRate, const PuzzleState &initialSt
     {
         if (mutated)
         {
-            ind.genes[i] = generateRandomMove(currentState);
+            // CORREÇÃO 3a: Cast explícito na atribuição
+            ind.genes[i] = static_cast<Move>(generateRandomMove(currentState));
         }
         else if (randPercent() < mutationRate)
         {
-            ind.genes[i] = generateRandomMove(currentState);
+            // CORREÇÃO 3b: Cast explícito na atribuição
+            ind.genes[i] = static_cast<Move>(generateRandomMove(currentState));
             mutated = true;
         }
 
-        applyMove(currentState, ind.genes[i]);
+        applyMove(currentState, static_cast<int>(ind.genes[i]));
     }
 
     if (mutated)
@@ -219,7 +218,6 @@ std::vector<Individual> nextGeneration(const std::vector<Individual> &population
         Individual p1 = tournamentSelection(population);
         Individual p2 = tournamentSelection(population);
 
-        // Recebe o par direto de forma limpa
         auto [child1, child2] = crossover(p1, p2, initialState);
 
         if (child1.stagnation <= maxStagnationAllowed && nextGen.size() < crossoverLimit)
