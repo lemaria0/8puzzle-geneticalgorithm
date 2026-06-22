@@ -1,8 +1,14 @@
+#include <GLFW/glfw3.h>
+#include <iostream>
+
 #include "core/puzzle_state.h"
 #include "core/utils.h"
 #include "algorithms/genetic.h"
 
-#include <iostream>
+#include "render/renderer.h"
+
+int indexInitial = 0;
+int indexFinal = 0;
 
 void printBoard(const PuzzleState &state)
 {
@@ -19,6 +25,86 @@ void printBoard(const PuzzleState &state)
         }
         std::cout << "\n+---+---+---+\n";
     }
+}
+
+std::vector<PuzzleState> reconstructPath(
+    const PuzzleState &initialState,
+    const Individual &individual)
+{
+    std::vector<PuzzleState> path;
+
+    PuzzleState currentState = initialState;
+    path.push_back(currentState);
+
+    for (int i = 0; i < individual.stepsToBest; i++)
+    {
+        if (applyMove(
+                currentState,
+                static_cast<int>(individual.genes[i])))
+        {
+            path.push_back(currentState);
+        }
+    }
+
+    return path;
+}
+
+void processInputInitial(GLFWwindow *window, int maxSize)
+{
+    static bool leftPressed = false;
+    static bool rightPressed = false;
+
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    {
+        if (!rightPressed && indexInitial < maxSize - 1)
+            indexInitial++;
+
+        rightPressed = true;
+    }
+    else
+        rightPressed = false;
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+    {
+        if (!leftPressed && indexInitial > 0)
+            indexInitial--;
+
+        leftPressed = true;
+    }
+    else
+        leftPressed = false;
+
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
+
+void processInputFinal(GLFWwindow *window, int maxSize)
+{
+    static bool leftPressed = false;
+    static bool rightPressed = false;
+
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    {
+        if (!rightPressed && indexFinal < maxSize - 1)
+            indexFinal++;
+
+        rightPressed = true;
+    }
+    else
+        rightPressed = false;
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+    {
+        if (!leftPressed && indexFinal > 0)
+            indexFinal--;
+
+        leftPressed = true;
+    }
+    else
+        leftPressed = false;
+
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 }
 
 int main()
@@ -38,9 +124,11 @@ int main()
 
     std::cout << "\nExecutando o Algoritmo Genetico...\n";
     GeneticResult result = runGeneticAlgorithm(
-        initialState, populationSize, geneLength, maxGenerations, 
-        elitismRate, crossoverRate, mutationRate
-    );
+        initialState, populationSize, geneLength, maxGenerations,
+        elitismRate, crossoverRate, mutationRate);
+
+    auto initialPath = reconstructPath(initialState, result.bestInitial);
+    auto finalPath = reconstructPath(initialState, result.bestFinal);
 
     std::cout << "\n=========================================\n";
     std::cout << "         RELATORIO DE EXECUCAO           \n";
@@ -55,9 +143,54 @@ int main()
 
     std::cout << "\n--- MELHOR ESTADO ALCANCADO PELO INDIVIDUO FINAL ---\n";
     printBoard(result.bestFinal.bestState);
-    
+
     std::cout << "Distancia Heuristica ate o Objetivo: " << calculateHeuristics(result.bestFinal.bestState) << "\n";
     std::cout << "=========================================\n";
+
+    if (!glfwInit())
+    {
+        std::cout << "Erro GLFW\n";
+        return -1;
+    }
+
+    GLFWwindow *windowInitial =
+        glfwCreateWindow(500, 500, "MELHOR DA PRIMEIRA GERACAO", NULL, NULL);
+
+    GLFWwindow *windowFinal =
+        glfwCreateWindow(500, 500, "MELHOR FINAL", NULL, windowInitial);
+
+    if (!windowInitial || !windowFinal)
+    {
+        std::cout << "Erro ao criar janelas\n";
+        glfwTerminate();
+        return -1;
+    }
+
+    while (!glfwWindowShouldClose(windowInitial) &&
+           !glfwWindowShouldClose(windowFinal))
+    {
+        glfwPollEvents();
+
+        // Primeira geração
+        glfwMakeContextCurrent(windowInitial);
+
+        glClear(GL_COLOR_BUFFER_BIT);
+        processInputInitial(windowInitial, initialPath.size());
+        renderState(initialPath[indexInitial]);
+        glfwSwapBuffers(windowInitial);
+
+        // Melhor final
+        glfwMakeContextCurrent(windowFinal);
+
+        glClear(GL_COLOR_BUFFER_BIT);
+        processInputFinal(windowFinal, finalPath.size());
+        renderState(finalPath[indexFinal]);
+        glfwSwapBuffers(windowFinal);
+    }
+
+    glfwDestroyWindow(windowInitial);
+    glfwDestroyWindow(windowFinal);
+    glfwTerminate();
 
     return 0;
 }
