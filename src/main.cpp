@@ -115,9 +115,9 @@ int main()
     std::cout << "\n--- TABULEIRO INICIAL GENERADO ---\n";
     printBoard(initialState);
 
-    int populationSize = 100;
+    int populationSize = 1000;
     int geneLength = 50;
-    int maxGenerations = 1000;
+    int maxGenerations = 100;
     double elitismRate = 0.10;
     double crossoverRate = 0.30;
     double mutationRate = 0.02;
@@ -133,14 +133,14 @@ int main()
     std::cout << "\n=========================================\n";
     std::cout << "         RELATORIO DE EXECUCAO           \n";
     std::cout << "=========================================\n";
-    std::cout << "Geracoes computadas   : " << result.totalGenerations << "\n";
-    std::cout << "Fitness inicial       : " << result.bestInitial.bestFitness << "\n";
-    std::cout << "Fitness final         : " << result.bestFinal.bestFitness << "\n";
-    std::cout << "Status do objetivo    : " << (result.solved ? "Sucesso" : "Falha") << "\n";
-    std::cout << "Passos ate a meta     : " << result.bestFinal.stepsToBest << "\n";
-    std::cout << "Estagnacoes           : " << result.bestFinal.stagnation << "\n";
-    std::cout << "Passos (1 geracao)    : " << result.bestInitial.stepsToBest << "\n";
-    std::cout << "Passos (solucao final): " << result.bestFinal.stepsToBest << "\n";
+    std::cout << "Geracoes computadas              : " << result.totalGenerations << "\n";
+    std::cout << "Fitness inicial                  : " << result.bestInitial.bestFitness << "\n";
+    std::cout << "Fitness final                    : " << result.bestFinal.bestFitness << "\n";
+    std::cout << "Passos ate a meta (1a geracao)   : " << result.bestInitial.stepsToBest << "\n";
+    std::cout << "Passos ate a meta (solucao final): " << result.bestFinal.stepsToBest << "\n";
+    std::cout << "Estagnacoes (1a geracao)         : " << result.bestInitial.stagnation << "\n";
+    std::cout << "Estagnacoes (solucao final)      : " << result.bestFinal.stagnation << "\n";
+    std::cout << "Status do objetivo               : " << (result.solved ? "Sucesso" : "Falha") << "\n";
     std::cout << "=========================================\n";
 
     std::cout << "\n--- MELHOR ESTADO ALCANCADO PELO INDIVIDUO FINAL ---\n";

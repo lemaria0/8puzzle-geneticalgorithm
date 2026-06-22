@@ -14,7 +14,15 @@ static std::mt19937 &getEngine()
 
 bool PuzzleState::operator==(const PuzzleState &other) const
 {
-    return this->board == other.board;
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (this->board[i][j] != other.board[i][j])
+                return false;
+        }
+    }
+    return true;
 }
 
 PuzzleState getGoalState()
